@@ -3,7 +3,7 @@ from telebot import types
 from dotenv import load_dotenv
 import os
 import json
-from datetime import time, datetime, timedelta
+from datetime import datetime, timedelta
 
 
 load_dotenv()
@@ -30,18 +30,8 @@ def closing_json(data):
 def add_appointment(user_date, user_time, user_client):
     data = opening_json()
     data['appointments'].append({"date": user_date,
-                                "time": user_time,
-                                "client": user_client})
-    closing_json(data)
-
-
-
-def add_review(user_client, user_text):
-    data = opening_json()
-
-    data['rewiews'].append({"client": user_client,
-                            "text": user_text})
-
+                                 "time": user_time,
+                                 "client": user_client})
     closing_json(data)
 
 
@@ -52,10 +42,11 @@ def time_keyboard(date):
         if app['date'] == date:
             if app['time'] in reg_time:
                 reg_time.remove(app['time'])
-        
     markup = types.InlineKeyboardMarkup(row_width=2)
     for i in reg_time:
-        markup.add(types.InlineKeyboardButton(text=i, callback_data=f'appointment;{date};{i}'))
+        markup.add(types.InlineKeyboardButton(
+            text=i,
+            callback_data=f'appointment;{date};{i}'))
     return markup
 
 
@@ -72,7 +63,7 @@ def save_client(message):
     data['clients'].append({f'{message.chat.id}': f'{message.text}'})
     closing_json(data)
     bot.send_message(message.chat.id, 'Ваше имя сохранено')
-    
+
 
 def review(message):
     data = opening_json()
@@ -84,13 +75,16 @@ def review(message):
 @bot.message_handler(commands=['add_review'])
 def add_review(message):
     bot.send_message(message.chat.id, 'Напишите отзыв:')
-    bot.register_next_step_handler_by_chat_id(message.chat.id, lambda message: review(message))
+    bot.register_next_step_handler_by_chat_id(message.chat.id,
+                                              lambda message: review(message))
 
 
 @bot.message_handler(commands=['set_name'])
 def set_name(message):
     bot.send_message(message.chat.id, 'Введите ваше имя:')
-    bot.register_next_step_handler_by_chat_id(message.chat.id, lambda message: save_client(message))
+    bot.register_next_step_handler_by_chat_id(message.chat.id,
+                                              lambda message:
+                                              save_client(message))
 
 
 @bot.message_handler(commands=['change_appointment'])
@@ -102,11 +96,15 @@ def change_appointment(message):
             user_lst.append(f'{i['date']};{i['time']}')
     markup = types.InlineKeyboardMarkup(row_width=2)
     for i in user_lst:
-        markup.add(types.InlineKeyboardButton(text=i, callback_data=f'chng_app;{i}'))
+        markup.add(types.InlineKeyboardButton(text=i,
+                                              callback_data=f'chng_app;{i}'))
     if user_lst:
-        bot.send_message(message.chat.id, 'Выберите запись:', reply_markup=markup)
+        bot.send_message(message.chat.id,
+                         'Выберите запись:',
+                         reply_markup=markup)
     else:
-        bot.send_message(message.chat.id, 'У вас нет записей. Записаться можно по команде: /make_appointment')
+        bot.send_message(message.chat.id,
+                         'У вас нет записей. Записаться можно по команде: /make_appointment')
 
 
 @bot.message_handler(commands=['make_appointment'])
@@ -127,25 +125,32 @@ def make_appointment(message):
                 break
     markup = types.InlineKeyboardMarkup(row_width=2)
     for i in dates_lst:
-        markup.add(types.InlineKeyboardButton(text=i, callback_data=f'date;{i}'))
+        markup.add(types.InlineKeyboardButton(text=i,
+                                              callback_data=f'date;{i}'))
     bot.send_message(message.chat.id, 'Выберите день:', reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call:True)
+@bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
     if call.data.startswith('date;'):
         date = call.data.replace('date;', "")
-        bot.send_message(call.message.chat.id, 'Выберите время:', reply_markup=time_keyboard(date))
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(call.message.chat.id,
+                         'Выберите время:',
+                         reply_markup=time_keyboard(date))
+        bot.delete_message(call.message.chat.id,
+                           call.message.message_id)
     if call.data.startswith('appointment;'):
         _, date, time = call.data.split(';')
-        bot.send_message(call.message.chat.id, f'Вы выбрали запись на: {date}; {time}')
+        bot.send_message(call.message.chat.id,
+                         f'Вы выбрали запись на: {date}; {time}')
         add_appointment(date, time, call.message.chat.id)
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.delete_message(call.message.chat.id,
+                           call.message.message_id)
     if call.data.startswith('chng_app;'):
         _, date, time = call.data.split(';')
         delete_app(time, date, call.message.chat.id)
-        bot.send_message(call.message.chat.id, f'Запись на {time}; {date} удалена' )
+        bot.send_message(call.message.chat.id,
+                         f'Запись на {time}; {date} удалена')
 
 
 bot.polling(non_stop=True)
