@@ -17,17 +17,20 @@ SCHEDULE = ["10:00", "12:00", "15:00", "17:00"]
 
 
 def opening_json():
+    '''Load JSON-file to dict.'''
     with open('data.json', 'r', encoding='utf-8') as file:
         data = json.load(file)
     return data
 
 
 def closing_json(data):
+    '''Write new data in JSON-file.'''
     with open('data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
 
 
 def add_appointment(user_date, user_time, user_client):
+    '''Add new appointment in JSON-file.'''
     data = opening_json()
     data['appointments'].append({"date": user_date,
                                  "time": user_time,
@@ -36,6 +39,7 @@ def add_appointment(user_date, user_time, user_client):
 
 
 def time_keyboard(date):
+    '''Return available time keyboard.'''
     reg_time = SCHEDULE
     data = opening_json()
     for app in data['appointments']:
@@ -51,6 +55,7 @@ def time_keyboard(date):
 
 
 def delete_app(time, date, client):
+    '''Delete specific appointment in JSON-file.'''
     data = opening_json()
     for i in data['appointments']:
         if i['time'] == time and i['date'] == date and i['client'] == client:
@@ -59,6 +64,7 @@ def delete_app(time, date, client):
 
 
 def save_client(message):
+    '''Save client's name in JSON-file.'''
     data = opening_json()
     data['clients'].append({f'{message.chat.id}': f'{message.text}'})
     closing_json(data)
@@ -66,6 +72,7 @@ def save_client(message):
 
 
 def review(message):
+    '''Add client's reviews in JSON-file'''
     data = opening_json()
     data['reviews'].append({f'{message.chat.id}': f'{message.text}'})
     closing_json(data)
@@ -74,6 +81,7 @@ def review(message):
 
 @bot.message_handler(commands=['add_review'])
 def add_review(message):
+    '''Ask client for review.'''
     bot.send_message(message.chat.id, 'Напишите отзыв:')
     bot.register_next_step_handler_by_chat_id(message.chat.id,
                                               lambda message: review(message))
@@ -81,6 +89,7 @@ def add_review(message):
 
 @bot.message_handler(commands=['set_name'])
 def set_name(message):
+    '''Ask client for name.'''
     bot.send_message(message.chat.id, 'Введите ваше имя:')
     bot.register_next_step_handler_by_chat_id(message.chat.id,
                                               lambda message:
@@ -89,6 +98,7 @@ def set_name(message):
 
 @bot.message_handler(commands=['change_appointment'])
 def change_appointment(message):
+    '''Show client's appointments.'''
     user_lst = []
     data = opening_json()
     for i in data['appointments']:
@@ -104,11 +114,13 @@ def change_appointment(message):
                          reply_markup=markup)
     else:
         bot.send_message(message.chat.id,
-                         'У вас нет записей. Записаться можно по команде: /make_appointment')
+                         'У вас нет записей. Записаться можно по команде: '
+                         '/make_appointment')
 
 
 @bot.message_handler(commands=['make_appointment'])
 def make_appointment(message):
+    '''Make appointment and save in JSON-data.'''
     dates_lst = []
     for i in range(7):
         date = datetime.now() + timedelta(days=(i + 3))
@@ -132,6 +144,7 @@ def make_appointment(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
+    '''Callback handler.'''
     if call.data.startswith('date;'):
         date = call.data.replace('date;', "")
         bot.send_message(call.message.chat.id,

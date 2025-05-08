@@ -1,5 +1,11 @@
 {
-    "appointments": [],
+    "appointments": [
+        {
+            "date": "11-05-2025",
+            "time": "12:00",
+            "client": 5031379719
+        }
+    ],
     "clients": [
         {
             "5031379719": "Максим"
